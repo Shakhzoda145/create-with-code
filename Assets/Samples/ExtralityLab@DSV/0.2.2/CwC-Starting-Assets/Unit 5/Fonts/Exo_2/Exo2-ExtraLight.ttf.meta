@@ -1,0 +1,23 @@
+fileFormatVersion: 2
+guid: 3e87fa48339bd41a89c361e84e587dca
+TrueTypeFontImporter:
+  externalObjects: {}
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Exo 2 Extra Light
+  fontNames:
+  - Exo 2 Extra Light
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 9e358774b8511446d90a622491036bf9, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  useLegacyBoundsCalculation: 0
+  shouldRoundAdvanceValue: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
