@@ -1,28 +1,36 @@
+using System.ComponentModel;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Unit 3 (lektion 3.1–3.4): kursens PlayerController.
-// Heter RunnerPlayerController eftersom PlayerController redan används av Unit 1.
+
+
 public class RunnerPlayerController : MonoBehaviour
 {
     private Rigidbody playerRb;
     private Animator playerAnim;
     private AudioSource playerAudio;
 
-    public InputAction jumpAction;           // 3.1 – bindning: <Keyboard>/space
-    public ParticleSystem explosionParticle; // 3.4
-    public ParticleSystem dirtParticle;      // 3.4
-    public AudioClip jumpSound;              // 3.4
-    public AudioClip crashSound;             // 3.4
+    public InputAction jumpAction;   
+    public InputAction flipAction;        
+    public ParticleSystem explosionParticle; 
+    public ParticleSystem dirtParticle;      
+    public AudioClip jumpSound;              
+    public AudioClip crashSound;   
+    public TextMeshProUGUI trickText;     
+    public AudioClip niceSound;
+    public AudioClip wowSound;
+    public AudioClip omgSound;
+    public float flipSpeed = 900f;     // grader per sekund (900 = ett varv på 0,4 s)
+    private bool isFlipping = false;   // snurrar spelaren just nu?
+    private float flipDegrees = 0;     // hur långt det pågående varvet har kommit
+    private int flipCount = 0;         // antal hela varv i det här hoppet     
 
     public float jumpForce = 10;
     public float gravityModifier = 1.5f;
     public bool isOnGround = true;
-    public bool gameOver = false;            // 3.2
+    public bool gameOver = false;            
 
-    // Projektet har "Reload Domain" avstängt, så Physics.gravity nollställs inte mellan Play.
-    // Kursens "Physics.gravity *= gravityModifier" skulle då göra gravitationen starkare
-    // varje gång. Därför utgår vi från standardvärdet varje gång.
     private static readonly Vector3 defaultGravity = new Vector3(0, -9.81f, 0);
 
     void Start()
@@ -33,26 +41,57 @@ public class RunnerPlayerController : MonoBehaviour
 
         Physics.gravity = defaultGravity * gravityModifier;
 
-        // Om ingen tangent är kopplad i Inspector används Space
+       
         if (jumpAction.bindings.Count == 0) jumpAction.AddBinding("<Keyboard>/space");
         jumpAction.Enable();
+        if(flipAction.bindings.Count == 0) flipAction.AddBinding ("<Keyboard>/w");
+        flipAction.Enable();
+        trickText.gameObject.SetActive(false);
     }
 
     void OnDisable()
     {
         jumpAction.Disable();
-    }
+        flipAction.Disable();
+  
+    
 
+
+    }
+   
     void Update()
     {
-        // 3.1 hopp, 3.3 inget hopp efter game over
+        // Hopp: bara på marken
         if (jumpAction.triggered && isOnGround && !gameOver)
         {
             playerRb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
             isOnGround = false;
-            playerAnim.SetTrigger("Jump_trig");              // 3.3
-            dirtParticle.Stop();                             // 3.4
-            playerAudio.PlayOneShot(jumpSound, 1.0f);        // 3.4
+            playerAnim.SetTrigger("Jump_trig");
+            dirtParticle.Stop();
+            playerAudio.PlayOneShot(jumpSound, 1.0f);
+        }
+
+        // Starta en kullerbytta: bara i luften och om vi inte redan snurrar
+        if (flipAction.triggered && !isOnGround && !isFlipping && !gameOver)
+        {
+            isFlipping = true;
+            flipDegrees = 0;
+        }
+
+        // Snurra en bit varje frame tills ett helt varv är klart
+        if (isFlipping)
+        {
+            float step = flipSpeed * Time.deltaTime;
+            transform.Rotate(Vector3.forward, -step, Space.World);
+            flipDegrees += step;
+
+            if (flipDegrees >= 360)
+            {
+                isFlipping = false;
+                flipCount++;
+                transform.rotation = Quaternion.Euler(0, 90, 0);
+                Debug.Log("FLIPS!: " + flipCount);
+            }
         }
     }
 
@@ -61,17 +100,64 @@ public class RunnerPlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isOnGround = true;
-            if (!gameOver) dirtParticle.Play();              // 3.4
+            if (!gameOver) dirtParticle.Play();
+
+            // Bedöm landningen
+            if (isFlipping)
+            {
+                // Landade mitt i ett varv: misslyckat, ingen text
+                isFlipping = false;
+                transform.rotation = Quaternion.Euler(0, 90, 0);
+            }
+            else if (flipCount > 0)
+            {
+                ShowTrickText();
+            }
+            flipCount = 0;
         }
         else if (collision.gameObject.CompareTag("Obstacle"))
         {
-            gameOver = true;                                 // 3.2
+            gameOver = true;
+            isFlipping = false;
             Debug.Log("Game Over!");
-            playerAnim.SetBool("Death_b", true);             // 3.3
-            playerAnim.SetInteger("DeathType_int", 1);       // 3.3
-            explosionParticle.Play();                        // 3.4
-            dirtParticle.Stop();                             // 3.4
-            playerAudio.PlayOneShot(crashSound, 1.0f);       // 3.4
+            playerAnim.SetBool("Death_b", true);
+            playerAnim.SetInteger("DeathType_int", 1);
+            explosionParticle.Play();
+            dirtParticle.Stop();
+            playerAudio.PlayOneShot(crashSound, 1.0f);
         }
+    }
+
+    // Välj och visa text utifrån antal kullerbyttor
+    void ShowTrickText()
+    {
+        string message;
+        AudioClip sound;
+        if (flipCount == 1)
+        {
+            message = "Nice!";
+            sound = niceSound;
+        }
+        else if (flipCount == 2)
+        {
+            message = "Wow!";
+            sound = wowSound;
+        }
+        else
+        {
+            message = "OMG!!!";
+            sound = omgSound;
+        }
+
+        trickText.text = message;
+        trickText.gameObject.SetActive(true);
+        if (sound != null) playerAudio.PlayOneShot(sound, 1.0f);
+        CancelInvoke("HideTrickText");
+        Invoke("HideTrickText", 1f);
+    }
+    
+    void HideTrickText()
+    {
+        trickText.gameObject.SetActive(false);
     }
 }
