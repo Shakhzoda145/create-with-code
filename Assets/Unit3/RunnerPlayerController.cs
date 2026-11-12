@@ -2,7 +2,7 @@ using System.ComponentModel;
 using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using TMPro;
+
 
 
 public class RunnerPlayerController : MonoBehaviour
@@ -97,18 +97,59 @@ public class RunnerPlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Ground"))
         {
             isOnGround = true;
-            flipCount = 0; 
-            if (!gameOver) dirtParticle.Play();              
+            if (!gameOver) dirtParticle.Play();
+
+            // Bedöm landningen
+            if (isFlipping)
+            {
+                // Landade mitt i ett varv: misslyckat, ingen text
+                isFlipping = false;
+                transform.rotation = Quaternion.Euler(0, 90, 0);
+            }
+            else if (flipCount > 0)
+            {
+                ShowTrickText();
+            }
+            flipCount = 0;
         }
         else if (collision.gameObject.CompareTag("Obstacle"))
         {
-            gameOver = true;                                 
+            gameOver = true;
+            isFlipping = false;
             Debug.Log("Game Over!");
-            playerAnim.SetBool("Death_b", true);             
-            playerAnim.SetInteger("DeathType_int", 1);       
-            explosionParticle.Play();                        
-            dirtParticle.Stop();                             
-            playerAudio.PlayOneShot(crashSound, 1.0f);       
+            playerAnim.SetBool("Death_b", true);
+            playerAnim.SetInteger("DeathType_int", 1);
+            explosionParticle.Play();
+            dirtParticle.Stop();
+            playerAudio.PlayOneShot(crashSound, 1.0f);
         }
+    }
+
+    // Välj och visa text utifrån antal kullerbyttor
+    void ShowTrickText()
+    {
+        string message;
+        if (flipCount == 1)
+        {
+            message = "Nice!";
+        }
+        else if (flipCount == 2)
+        {
+            message = "Wow!";
+        }
+        else
+        {
+            message = "OMG!!!";
+        }
+
+        trickText.text = message;
+        trickText.gameObject.SetActive(true);
+        CancelInvoke("HideTrickText");
+        Invoke("HideTrickText", 1f);
+    }
+
+    void HideTrickText()
+    {
+        trickText.gameObject.SetActive(false);
     }
 }
