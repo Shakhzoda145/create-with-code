@@ -1,6 +1,8 @@
 using System.ComponentModel;
+using TMPro;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using TMPro;
 
 
 public class RunnerPlayerController : MonoBehaviour
@@ -14,7 +16,8 @@ public class RunnerPlayerController : MonoBehaviour
     public ParticleSystem explosionParticle; 
     public ParticleSystem dirtParticle;      
     public AudioClip jumpSound;              
-    public AudioClip crashSound;        
+    public AudioClip crashSound;   
+    public TextMeshProUGUI trickText;     
     public float flipSpeed = 900f;     // grader per sekund (900 = ett varv på 0,4 s)
     private bool isFlipping = false;   // snurrar spelaren just nu?
     private float flipDegrees = 0;     // hur långt det pågående varvet har kommit
@@ -40,6 +43,7 @@ public class RunnerPlayerController : MonoBehaviour
         jumpAction.Enable();
         if(flipAction.bindings.Count == 0) flipAction.AddBinding ("<Keyboard>/w");
         flipAction.Enable();
+        trickText.gameObject.SetActive(false);
     }
 
     void OnDisable()
