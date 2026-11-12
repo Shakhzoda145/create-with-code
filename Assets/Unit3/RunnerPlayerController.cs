@@ -18,6 +18,9 @@ public class RunnerPlayerController : MonoBehaviour
     public AudioClip jumpSound;              
     public AudioClip crashSound;   
     public TextMeshProUGUI trickText;     
+    public AudioClip niceSound;
+    public AudioClip wowSound;
+    public AudioClip omgSound;
     public float flipSpeed = 900f;     // grader per sekund (900 = ett varv på 0,4 s)
     private bool isFlipping = false;   // snurrar spelaren just nu?
     private float flipDegrees = 0;     // hur långt det pågående varvet har kommit
@@ -129,25 +132,30 @@ public class RunnerPlayerController : MonoBehaviour
     void ShowTrickText()
     {
         string message;
+        AudioClip sound;
         if (flipCount == 1)
         {
             message = "Nice!";
+            sound = niceSound;
         }
         else if (flipCount == 2)
         {
             message = "Wow!";
+            sound = wowSound;
         }
         else
         {
             message = "OMG!!!";
+            sound = omgSound;
         }
 
         trickText.text = message;
         trickText.gameObject.SetActive(true);
+        if (sound != null) playerAudio.PlayOneShot(sound, 1.0f);
         CancelInvoke("HideTrickText");
         Invoke("HideTrickText", 1f);
     }
-
+    
     void HideTrickText()
     {
         trickText.gameObject.SetActive(false);
