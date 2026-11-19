@@ -1,7 +1,9 @@
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 // Hjälpmenyer för slash-tillägget till Unit 4. Varje menyval motsvarar ett steg.
 public static class Unit4SlashSetup
@@ -162,6 +164,59 @@ public static class Unit4SlashSetup
 
         Save(scene);
         Debug.Log("Slash: karaktär tillagd, höjd " + height + " -> " + targetHeight);
+    }
+
+    // Steg 6: poäng, liv, rundor och game over
+    [MenuItem("Tools/Unit 4 Slash/4 Lägg till poäng, liv och rundor")]
+    public static void AddGameLoop()
+    {
+        var scene = OpenScene();
+        var oldCanvas = GameObject.Find("Slash Canvas");
+        if (oldCanvas != null) Object.DestroyImmediate(oldCanvas);
+        var oldGm = GameObject.Find("Slash Game Manager");
+        if (oldGm != null) Object.DestroyImmediate(oldGm);
+
+        var canvasGo = new GameObject("Slash Canvas", typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+        canvasGo.GetComponent<Canvas>().renderMode = RenderMode.ScreenSpaceOverlay;
+        var scaler = canvasGo.GetComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+
+        var gm = new GameObject("Slash Game Manager").AddComponent<SlashGameManager>();
+        gm.scoreText = Text(canvasGo, "Score Text", new Vector2(0, 1), new Vector2(30, -20), TextAlignmentOptions.TopLeft, 48);
+        gm.roundText = Text(canvasGo, "Round Text", new Vector2(0.5f, 1), new Vector2(0, -20), TextAlignmentOptions.Top, 48);
+        gm.livesText = Text(canvasGo, "Lives Text", new Vector2(1, 1), new Vector2(-30, -20), TextAlignmentOptions.TopRight, 48);
+        gm.gameOverText = Text(canvasGo, "Game Over Text", new Vector2(0.5f, 0.5f), Vector2.zero, TextAlignmentOptions.Center, 80);
+        gm.gameOverText.color = new Color(1f, 0.35f, 0.3f);
+        gm.gameOverText.rectTransform.sizeDelta = new Vector2(1400, 500);
+
+        // Scenen måste finnas i Build Settings för att R (starta om) ska fungera
+        var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        if (!scenes.Exists(sc => sc.path == ScenePath))
+        {
+            scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
+        }
+
+        Save(scene);
+        Debug.Log("Slash: poäng, liv och rundor tillagda.");
+    }
+
+    static TextMeshProUGUI Text(GameObject canvas, string name, Vector2 anchor, Vector2 pos, TextAlignmentOptions align, float size)
+    {
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(canvas.transform, false);
+        var t = go.AddComponent<TextMeshProUGUI>();
+        t.font = TMP_Settings.defaultFontAsset;
+        t.fontSize = size;
+        t.alignment = align;
+        t.color = Color.white;
+        t.text = name;
+        var rt = t.rectTransform;
+        rt.anchorMin = rt.anchorMax = rt.pivot = anchor;
+        rt.anchoredPosition = pos;
+        rt.sizeDelta = new Vector2(500, 80);
+        return t;
     }
 
     static Bounds GetBounds(GameObject go)
