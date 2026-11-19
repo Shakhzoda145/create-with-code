@@ -18,6 +18,7 @@ public class SlashGameManager : MonoBehaviour
     public TextMeshProUGUI livesText;
     public TextMeshProUGUI roundText;
     public TextMeshProUGUI gameOverText;
+    public AudioSource music;                 // bakgrundsmusiken
 
     private float invulnerableUntil = 0;      // kort skydd efter en träff
 
@@ -71,6 +72,7 @@ public class SlashGameManager : MonoBehaviour
         gameOverText.text = "GAME OVER\nPoints: " + score + "\nPress R to play again";
         gameOverText.gameObject.SetActive(true);
         Time.timeScale = 0;   // frys spelet
+        if (music != null) music.volume *= 0.3f; // sänk musiken vid game over
     }
 
     void UpdateUI()
