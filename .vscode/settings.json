@@ -67,5 +67,5 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "create-with-code.slnx"
+    "dotnet.defaultSolution": "myproject.slnx"
 }
