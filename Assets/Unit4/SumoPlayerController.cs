@@ -6,9 +6,18 @@ using UnityEngine.InputSystem;
 // Heter SumoPlayerController eftersom PlayerController redan används av Unit 1.
 public class SumoPlayerController : MonoBehaviour
 {
-    public float speed = 5.0f;
+    public float speed = 5.0f;               // (kursens gamla kraft, används inte längre)
+    public float moveSpeed = 8.0f;           // Slash-tillägg: hur snabbt karaktären springer
+    public float acceleration = 40.0f;       // hur snabbt den når full fart / stannar
+    public float turnSpeed = 720.0f;         // grader per sekund när den vänder sig
     public bool hasPowerup = false;
     public GameObject powerupIndicator;
+    public InputAction slashAction;          // Slash-tillägg: Space
+    public float slashRange = 3.0f;          // hur långt slashen når
+    public SwordSwing sword;                 // svärdet som sveper
+    public AudioClip slashSound;             // ljudet för varje slash
+    private AudioSource playerAudio;
+    public Animator characterAnim;           // karaktärens animationer (springa/stå)
 
     private Rigidbody playerRb;
     private GameObject focalPoint;
@@ -23,19 +32,64 @@ public class SumoPlayerController : MonoBehaviour
         playerRb = GetComponent<Rigidbody>();
         focalPoint = GameObject.Find("Focal Point");
         moveAction = CreateMoveAction();
+
+        // Slash-tillägg: spelaren ska inte rulla, bara springa och vända sig
+        playerRb.constraints = RigidbodyConstraints.FreezeRotation;
+
+        if (slashAction.bindings.Count == 0) slashAction.AddBinding("<Keyboard>/space");
+        slashAction.Enable();
+        playerAudio = GetComponent<AudioSource>();
+        if (characterAnim != null) characterAnim.SetBool("Static_b", true);
     }
 
     // Krafter läggs i FixedUpdate, som körs i takt med fysikmotorn.
     // I Update blir kraften starkare ju högre bildfrekvens datorn har.
     void FixedUpdate()
     {
-        // 4.1: rulla framåt/bakåt i den riktning kameran tittar (W/S, upp/ner)
-        float forwardInput = moveAction.ReadValue<Vector2>().y;
-        playerRb.AddForce(focalPoint.transform.forward * speed * forwardInput);
+        // Slash-tillägg: WASD styr karaktären direkt, relativt kameran.
+        // I stället för en kraft styr vi farten mot ett mål, så att den
+        // svarar snabbt och stannar när man släpper tangenten.
+        Vector3 targetVelocity = GetMoveDirection() * moveSpeed;
+        Vector3 v = playerRb.linearVelocity;
+        Vector3 flat = new Vector3(v.x, 0, v.z);
+        flat = Vector3.MoveTowards(flat, targetVelocity, acceleration * Time.fixedDeltaTime);
+        playerRb.linearVelocity = new Vector3(flat.x, v.y, flat.z);
+    }
+
+    // W/S = fram/bak och A/D = vänster/höger, sett från kameran
+    Vector3 GetMoveDirection()
+    {
+        Vector2 input = moveAction.ReadValue<Vector2>();
+        Vector3 forward = focalPoint.transform.forward;
+        forward.y = 0;
+        forward.Normalize();
+        Vector3 right = new Vector3(forward.z, 0, -forward.x);
+        return Vector3.ClampMagnitude(forward * input.y + right * input.x, 1f);
     }
 
     void Update()
     {
+        // Slash-tillägg: karaktären vänder sig åt det håll den springer
+        Vector3 moveDirection = GetMoveDirection();
+        if (moveDirection.magnitude > 0.1f)
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+        }
+
+        // Karaktären springer snabbare ju fortare spelaren rör sig
+        if (characterAnim != null)
+        {
+            Vector3 v = playerRb.linearVelocity;
+            float groundSpeed = new Vector3(v.x, 0, v.z).magnitude;
+            characterAnim.SetFloat("Speed_f", Mathf.Clamp01(groundSpeed / moveSpeed));
+        }
+
+        if (slashAction.triggered)
+        {
+            Slash();
+        }
+
         // 4.3: ringen följer spelaren
         powerupIndicator.transform.position = transform.position + new Vector3(0, -0.5f, 0);
     }
@@ -80,15 +134,32 @@ public class SumoPlayerController : MonoBehaviour
         action.AddCompositeBinding("2DVector")
             .With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")
             .With("Left", "<Keyboard>/a").With("Right", "<Keyboard>/d");
-        action.AddCompositeBinding("2DVector")
-            .With("Up", "<Keyboard>/upArrow").With("Down", "<Keyboard>/downArrow")
-            .With("Left", "<Keyboard>/leftArrow").With("Right", "<Keyboard>/rightArrow");
-        action.Enable();
+        action.Enable();   // Slash-tillägg: bara WASD, piltangenterna vrider kameran
         return action;
     }
 
     void OnDisable()
     {
         moveAction?.Disable();
+        slashAction.Disable();
+    }
+
+    // Slash-tillägg: förstör alla fiender i ett klot runt spelaren (lite framåt)
+    void Slash()
+    {
+        if (sword != null) sword.Swing();
+        if (playerAudio != null && slashSound != null) playerAudio.PlayOneShot(slashSound);
+
+        Vector3 center = transform.position + transform.forward * 1.0f;
+        Collider[] hits = Physics.OverlapSphere(center, slashRange);
+
+        foreach (Collider hit in hits)
+        {
+            if (hit.CompareTag("Enemy"))
+            {
+                Destroy(hit.gameObject);
+                if (SlashGameManager.instance != null) SlashGameManager.instance.AddKill();
+            }
+        }
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-// Unit 4 (lektion 4.1): roterar kameran runt ön med vänster/höger (A/D, piltangenter)
+// Unit 4 (lektion 4.1): roterar kameran runt ön (slash-tillägg: piltangenter eller Q/E)
 public class RotateCamera : MonoBehaviour
 {
     public float rotationSpeed = 150f;
@@ -23,9 +23,10 @@ public class RotateCamera : MonoBehaviour
     static InputAction CreateMoveAction()
     {
         var action = new InputAction("Move", InputActionType.Value);
+        // Slash-tillägg: WASD styr nu karaktären, så kameran vrids med pilarna eller Q/E
         action.AddCompositeBinding("2DVector")
-            .With("Up", "<Keyboard>/w").With("Down", "<Keyboard>/s")
-            .With("Left", "<Keyboard>/a").With("Right", "<Keyboard>/d");
+            .With("Up", "<Keyboard>/e").With("Down", "<Keyboard>/q")
+            .With("Left", "<Keyboard>/q").With("Right", "<Keyboard>/e");
         action.AddCompositeBinding("2DVector")
             .With("Up", "<Keyboard>/upArrow").With("Down", "<Keyboard>/downArrow")
             .With("Left", "<Keyboard>/leftArrow").With("Right", "<Keyboard>/rightArrow");
