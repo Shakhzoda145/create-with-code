@@ -19,6 +19,8 @@ public class SlashGameManager : MonoBehaviour
     public TextMeshProUGUI roundText;
     public TextMeshProUGUI gameOverText;
     public AudioSource music;                 // bakgrundsmusiken
+    public AudioClip hitSound;                // ljudet när man förlorar ett liv
+    private AudioSource sfx;
 
     private float invulnerableUntil = 0;      // kort skydd efter en träff
 
@@ -30,6 +32,7 @@ public class SlashGameManager : MonoBehaviour
 
     void Start()
     {
+        sfx = GetComponent<AudioSource>();
         gameOverText.gameObject.SetActive(false);
         UpdateUI();
     }
@@ -58,6 +61,7 @@ public class SlashGameManager : MonoBehaviour
     {
         if (!isGameActive || Time.time < invulnerableUntil) return;
         lives--;
+        if (sfx != null && hitSound != null) sfx.PlayOneShot(hitSound);
         invulnerableUntil = Time.time + 1.0f;
         if (lives <= 0)
         {

@@ -394,6 +394,21 @@ public static class Unit4SlashSetup
         Debug.Log("Slash: musik tillagd.");
     }
 
+    // Steg 9: ljud när spelaren förlorar ett liv
+    [MenuItem("Tools/Unit 4 Slash/7 Lägg till träffljud")]
+    public static void AddHitSound()
+    {
+        var scene = OpenScene();
+        var gm = Object.FindAnyObjectByType<SlashGameManager>();
+        var source = gm.GetComponent<AudioSource>();
+        if (source == null) source = gm.gameObject.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        gm.hitSound = AssetDatabase.LoadAssetAtPath<AudioClip>("Assets/Ouch.Ljud 1.wav");
+        EditorUtility.SetDirty(gm);
+        Save(scene);
+        Debug.Log("Slash: träffljud tillagt.");
+    }
+
     static Material Lit(string name, Color color, float smooth)
     {
         var m = Mat(name, "Universal Render Pipeline/Lit");
