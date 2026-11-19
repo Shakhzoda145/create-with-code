@@ -9,6 +9,7 @@ public class SumoPlayerController : MonoBehaviour
     public float speed = 5.0f;
     public bool hasPowerup = false;
     public GameObject powerupIndicator;
+    public InputAction slashAction;          // Slash-tillägg: Space
 
     private Rigidbody playerRb;
     private GameObject focalPoint;
@@ -23,6 +24,12 @@ public class SumoPlayerController : MonoBehaviour
         playerRb = GetComponent<Rigidbody>();
         focalPoint = GameObject.Find("Focal Point");
         moveAction = CreateMoveAction();
+
+        // Slash-tillägg: spelaren ska inte rulla, bara glida och vridas mot kameran
+        playerRb.constraints = RigidbodyConstraints.FreezeRotation;
+
+        if (slashAction.bindings.Count == 0) slashAction.AddBinding("<Keyboard>/space");
+        slashAction.Enable();
     }
 
     // Krafter läggs i FixedUpdate, som körs i takt med fysikmotorn.
@@ -36,6 +43,14 @@ public class SumoPlayerController : MonoBehaviour
 
     void Update()
     {
+        // Slash-tillägg: spelaren tittar alltid åt samma håll som kameran
+        transform.rotation = Quaternion.Euler(0, focalPoint.transform.eulerAngles.y, 0);
+
+        if (slashAction.triggered)
+        {
+            Debug.Log("Slash!");
+        }
+
         // 4.3: ringen följer spelaren
         powerupIndicator.transform.position = transform.position + new Vector3(0, -0.5f, 0);
     }
@@ -90,5 +105,6 @@ public class SumoPlayerController : MonoBehaviour
     void OnDisable()
     {
         moveAction?.Disable();
+        slashAction.Disable();
     }
 }
