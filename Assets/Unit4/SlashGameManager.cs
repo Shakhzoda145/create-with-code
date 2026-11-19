@@ -11,7 +11,7 @@ public class SlashGameManager : MonoBehaviour
     public int lives = 3;
     public int score = 0;
     public int round = 1;
-    public int killsPerRound = 5;              // så många bollar för att nå nästa runda
+    public int killsPerRound = 4;              // så många bollar för att nå nästa runda
     public bool isGameActive = true;
 
     public TextMeshProUGUI scoreText;

@@ -1,15 +1,15 @@
 using UnityEngine;
 
-// Unit 4 + slash-tillägg: en jämn ström av fiender framifrån, max 6 samtidigt.
+// Unit 4 + slash-tillägg: en jämn ström av fiender framifrån, max 8 samtidigt.
 // Varje runda kommer de tätare, rullar fortare och fler får vara ute samtidigt.
 public class SpawnManager : MonoBehaviour
 {
     public GameObject enemyPrefab;
     public GameObject powerupPrefab;     // används inte längre (powerups är borttagna)
     public int enemyCount;
-    public int absoluteMaxEnemies = 6;   // aldrig fler än så här samtidigt
-    public float startInterval = 2.5f;   // sekunder mellan bollar i runda 1
-    public float minInterval = 0.7f;     // snabbaste takten
+    public int absoluteMaxEnemies = 8;   // aldrig fler än så här samtidigt
+    public float startInterval = 1.5f;   // sekunder mellan bollar i runda 1
+    public float minInterval = 0.4f;     // snabbaste takten
     private float spawnTimer = 1.0f;
     private Transform focalPoint;
     private SlashGameManager game;
@@ -26,7 +26,7 @@ public class SpawnManager : MonoBehaviour
 
         int round = game != null ? game.round : 1;
         enemyCount = FindObjectsByType<Enemy>(FindObjectsSortMode.None).Length;
-        int maxEnemies = Mathf.Min(2 + round, absoluteMaxEnemies); // runda 1: 3, runda 4+: 6
+        int maxEnemies = Mathf.Min(3 + round, absoluteMaxEnemies); // runda 1: 4, runda 5+: 8
 
         spawnTimer -= Time.deltaTime;
         if (spawnTimer <= 0)
@@ -35,7 +35,7 @@ public class SpawnManager : MonoBehaviour
             {
                 SpawnEnemy(round);
             }
-            spawnTimer = Mathf.Max(minInterval, startInterval - 0.3f * (round - 1));
+            spawnTimer = Mathf.Max(minInterval, startInterval - 0.2f * (round - 1));
         }
     }
 
@@ -43,8 +43,8 @@ public class SpawnManager : MonoBehaviour
     {
         GameObject enemy = Instantiate(enemyPrefab, GenerateSpawnPosition(), enemyPrefab.transform.rotation);
         Enemy e = enemy.GetComponent<Enemy>();
-        e.speed = 3.0f + 0.75f * (round - 1);
-        e.maxSpeed = 4.0f + 1.0f * (round - 1);
+        e.speed = 4.0f + 1.0f * (round - 1);
+        e.maxSpeed = 5.0f + 1.5f * (round - 1);
     }
 
     // Bollarna kommer från bortre kanten, framför kameran

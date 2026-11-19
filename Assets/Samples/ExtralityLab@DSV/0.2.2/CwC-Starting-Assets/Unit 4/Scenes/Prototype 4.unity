@@ -811,9 +811,9 @@ MonoBehaviour:
   enemyPrefab: {fileID: 4449654736509166792, guid: 66dc4359aa0aa1849ab0807cb2b53b76, type: 3}
   powerupPrefab: {fileID: 7476660935829059119, guid: e0ab344e4cfb07f4984ddea9672c9dc3, type: 3}
   enemyCount: 0
-  absoluteMaxEnemies: 6
-  startInterval: 2.5
-  minInterval: 0.7
+  absoluteMaxEnemies: 8
+  startInterval: 1.5
+  minInterval: 0.4
 --- !u!4 &587145383
 Transform:
   m_ObjectHideFlags: 0
@@ -2916,7 +2916,7 @@ MonoBehaviour:
   lives: 3
   score: 0
   round: 1
-  killsPerRound: 5
+  killsPerRound: 4
   isGameActive: 1
   scoreText: {fileID: 1002531860}
   livesText: {fileID: 689705258}
