@@ -10,6 +10,7 @@ public class SumoPlayerController : MonoBehaviour
     public bool hasPowerup = false;
     public GameObject powerupIndicator;
     public InputAction slashAction;          // Slash-tillägg: Space
+    public float slashRange = 3.0f;          // hur långt slashen når
 
     private Rigidbody playerRb;
     private GameObject focalPoint;
@@ -48,7 +49,7 @@ public class SumoPlayerController : MonoBehaviour
 
         if (slashAction.triggered)
         {
-            Debug.Log("Slash!");
+            Slash();
         }
 
         // 4.3: ringen följer spelaren
@@ -106,5 +107,20 @@ public class SumoPlayerController : MonoBehaviour
     {
         moveAction?.Disable();
         slashAction.Disable();
+    }
+
+    // Slash-tillägg: förstör alla fiender i ett klot runt spelaren (lite framåt)
+    void Slash()
+    {
+        Vector3 center = transform.position + transform.forward * 1.0f;
+        Collider[] hits = Physics.OverlapSphere(center, slashRange);
+
+        foreach (Collider hit in hits)
+        {
+            if (hit.CompareTag("Enemy"))
+            {
+                Destroy(hit.gameObject);
+            }
+        }
     }
 }
