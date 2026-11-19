@@ -11,6 +11,9 @@ public class SumoPlayerController : MonoBehaviour
     public GameObject powerupIndicator;
     public InputAction slashAction;          // Slash-tillägg: Space
     public float slashRange = 3.0f;          // hur långt slashen når
+    public SwordSwing sword;                 // svärdet som sveper
+    public AudioClip slashSound;             // ljudet för varje slash
+    private AudioSource playerAudio;
 
     private Rigidbody playerRb;
     private GameObject focalPoint;
@@ -31,6 +34,7 @@ public class SumoPlayerController : MonoBehaviour
 
         if (slashAction.bindings.Count == 0) slashAction.AddBinding("<Keyboard>/space");
         slashAction.Enable();
+        playerAudio = GetComponent<AudioSource>();
     }
 
     // Krafter läggs i FixedUpdate, som körs i takt med fysikmotorn.
@@ -112,6 +116,9 @@ public class SumoPlayerController : MonoBehaviour
     // Slash-tillägg: förstör alla fiender i ett klot runt spelaren (lite framåt)
     void Slash()
     {
+        if (sword != null) sword.Swing();
+        if (playerAudio != null && slashSound != null) playerAudio.PlayOneShot(slashSound);
+
         Vector3 center = transform.position + transform.forward * 1.0f;
         Collider[] hits = Physics.OverlapSphere(center, slashRange);
 

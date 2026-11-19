@@ -54,5 +54,86 @@ public static class Unit4SlashSetup
         Save(scene);
         Debug.Log("Slash: sex väggar tillagda.");
     }
+    // Steg 4: svärd som sveper + ljud vid varje slash
+    [MenuItem("Tools/Unit 4 Slash/2 Lägg till svärd och ljud")]
+    public static void AddSword()
+    {
+        var scene = OpenScene();
+        var player = GameObject.Find("Player");
+        var old = player.transform.Find("Sword Pivot");
+        if (old != null) Object.DestroyImmediate(old.gameObject); // bygg om svärdet om det redan finns
+
+        var steel = Mat("Sword_Steel", "Universal Render Pipeline/Lit");
+        steel.SetColor("_BaseColor", new Color(0.85f, 0.88f, 0.92f));
+        steel.SetFloat("_Metallic", 0.3f);
+        steel.SetFloat("_Smoothness", 0.8f);
+        EditorUtility.SetDirty(steel);
+        var wood = Mat("Sword_Handle", "Universal Render Pipeline/Lit");
+        wood.SetColor("_BaseColor", new Color(0.4f, 0.22f, 0.1f));
+        var trailMat = Mat("Sword_Trail", "Sprites/Default");
+
+        // Pivot i spelarens mitt; skala bort spelarens 1.5 så att svärdet får "riktiga" mått
+        var pivot = new GameObject("Sword Pivot");
+        pivot.transform.SetParent(player.transform, false);
+        pivot.transform.localScale = Vector3.one / player.transform.localScale.x;
+
+        Part("Handle", pivot, new Vector3(0, 0.3f, 0.45f), new Vector3(0.14f, 0.14f, 0.5f), wood);
+        Part("Guard", pivot, new Vector3(0, 0.3f, 0.72f), new Vector3(0.6f, 0.1f, 0.12f), wood);
+        Part("Blade", pivot, new Vector3(0, 0.3f, 1.6f), new Vector3(0.3f, 0.06f, 1.7f), steel);
+
+        var tip = new GameObject("Tip");
+        tip.transform.SetParent(pivot.transform, false);
+        tip.transform.localPosition = new Vector3(0, 0.3f, 2.3f);
+        var trail = tip.AddComponent<TrailRenderer>();
+        trail.sharedMaterial = trailMat;
+        trail.time = 0.3f;
+        trail.widthMultiplier = 0.8f;
+        trail.widthCurve = AnimationCurve.Linear(0, 1, 1, 0);
+        var g = new Gradient();
+        g.SetKeys(new[] { new GradientColorKey(Color.white, 0), new GradientColorKey(new Color(0.6f, 0.85f, 1f), 1) },
+                  new[] { new GradientAlphaKey(0.9f, 0), new GradientAlphaKey(0f, 1) });
+        trail.colorGradient = g;
+        trail.emitting = false;
+
+        var swing = pivot.AddComponent<SwordSwing>();
+        swing.trail = trail;
+
+        var audio = player.GetComponent<AudioSource>();
+        if (audio == null) audio = player.AddComponent<AudioSource>();
+        audio.playOnAwake = false;
+
+        var ctrl = player.GetComponent<SumoPlayerController>();
+        ctrl.sword = swing;
+        ctrl.slashSound = AssetDatabase.LoadAssetAtPath<AudioClip>(Out + "/Swoosh.wav");
+        EditorUtility.SetDirty(ctrl);
+
+        Save(scene);
+        Debug.Log("Slash: svärd och ljud tillagda.");
+    }
+
+    // Hämtar ett material om det redan finns, annars skapas det
+    static Material Mat(string name, string shader)
+    {
+        string path = Out + "/" + name + ".mat";
+        var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (m == null)
+        {
+            m = new Material(Shader.Find(shader)) { name = name };
+            AssetDatabase.CreateAsset(m, path);
+        }
+        return m;
+    }
+
+    // Skapar en kub utan collider (så att svärdet inte knuffar fiender eller spelaren)
+    static void Part(string name, GameObject parent, Vector3 pos, Vector3 scale, Material mat)
+    {
+        var part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        part.name = name;
+        Object.DestroyImmediate(part.GetComponent<Collider>());
+        part.transform.SetParent(parent.transform, false);
+        part.transform.localPosition = pos;
+        part.transform.localScale = scale;
+        part.GetComponent<Renderer>().sharedMaterial = mat;
+    }
 }
 #endif
