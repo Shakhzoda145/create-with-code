@@ -14,6 +14,7 @@ public class SumoPlayerController : MonoBehaviour
     public SwordSwing sword;                 // svärdet som sveper
     public AudioClip slashSound;             // ljudet för varje slash
     private AudioSource playerAudio;
+    public Animator characterAnim;           // karaktärens animationer (springa/stå)
 
     private Rigidbody playerRb;
     private GameObject focalPoint;
@@ -35,6 +36,7 @@ public class SumoPlayerController : MonoBehaviour
         if (slashAction.bindings.Count == 0) slashAction.AddBinding("<Keyboard>/space");
         slashAction.Enable();
         playerAudio = GetComponent<AudioSource>();
+        if (characterAnim != null) characterAnim.SetBool("Static_b", true);
     }
 
     // Krafter läggs i FixedUpdate, som körs i takt med fysikmotorn.
@@ -50,6 +52,14 @@ public class SumoPlayerController : MonoBehaviour
     {
         // Slash-tillägg: spelaren tittar alltid åt samma håll som kameran
         transform.rotation = Quaternion.Euler(0, focalPoint.transform.eulerAngles.y, 0);
+
+        // Karaktären springer snabbare ju fortare spelaren rör sig
+        if (characterAnim != null)
+        {
+            Vector3 v = playerRb.linearVelocity;
+            float groundSpeed = new Vector3(v.x, 0, v.z).magnitude;
+            characterAnim.SetFloat("Speed_f", Mathf.Clamp01(groundSpeed / 6f));
+        }
 
         if (slashAction.triggered)
         {

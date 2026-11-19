@@ -111,6 +111,67 @@ public static class Unit4SlashSetup
         Debug.Log("Slash: svärd och ljud tillagda.");
     }
 
+    // Steg 5: byt bollen mot en karaktär från Unit 2
+    [MenuItem("Tools/Unit 4 Slash/3 Byt bollen mot karaktär")]
+    public static void AddCharacter()
+    {
+        var scene = OpenScene();
+        var player = GameObject.Find("Player");
+        var old = player.transform.Find("Character");
+        if (old != null) Object.DestroyImmediate(old.gameObject); // bygg om om den redan finns
+
+        const string prefabPath = "Assets/Samples/ExtralityLab@DSV/0.2.2/CwC-Starting-Assets/Unit 2/Course Library/Humans/SimpleFarmer_Man_01_Brown.prefab";
+        var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+        var character = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
+        character.name = "Character";
+
+        // Ta bort ev. colliders så att bara spelarens osynliga klot krockar
+        foreach (var c in character.GetComponentsInChildren<Collider>()) Object.DestroyImmediate(c);
+        var anim = character.GetComponent<Animator>();
+        if (anim != null) anim.applyRootMotion = false; // animationen får inte flytta karaktären
+
+        character.transform.SetParent(player.transform, false);
+        character.transform.localRotation = Quaternion.identity;
+
+        // Skala så att karaktären blir ca 3 enheter lång i världen
+        float targetHeight = 3.0f;
+        float height = GetBounds(character).size.y;
+        float worldScale = targetHeight / height;
+        character.transform.localScale = Vector3.one * worldScale / player.transform.lossyScale.y;
+
+        // Ställ fötterna på botten av spelarens klot
+        float sphereBottom = player.GetComponent<Collider>().bounds.min.y;
+        float feet = GetBounds(character).min.y;
+        character.transform.position += Vector3.up * (sphereBottom - feet);
+
+        // Koppla animationerna till spelarens styrning
+        var ctrl = player.GetComponent<SumoPlayerController>();
+        ctrl.characterAnim = anim;
+        EditorUtility.SetDirty(ctrl);
+
+        // Flytta upp svärdet till ungefär handhöjd
+        var pivot = player.transform.Find("Sword Pivot");
+        if (pivot != null)
+        {
+            float handY = sphereBottom + 0.45f * targetHeight - 0.3f; // 0.3 = klingans höjd i pivoten
+            pivot.position = new Vector3(pivot.position.x, handY, pivot.position.z);
+        }
+
+        // Göm bollen (collidern och fysiken finns kvar)
+        player.GetComponent<MeshRenderer>().enabled = false;
+
+        Save(scene);
+        Debug.Log("Slash: karaktär tillagd, höjd " + height + " -> " + targetHeight);
+    }
+
+    static Bounds GetBounds(GameObject go)
+    {
+        var rs = go.GetComponentsInChildren<Renderer>();
+        var b = rs[0].bounds;
+        foreach (var r in rs) b.Encapsulate(r.bounds);
+        return b;
+    }
+
     // Hämtar ett material om det redan finns, annars skapas det
     static Material Mat(string name, string shader)
     {
